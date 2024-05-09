@@ -1,0 +1,6 @@
+@SeekerAPI_HostAddress = http://localhost:5278
+
+GET {{SeekerAPI_HostAddress}}/job
+Accept: application/json
+
+###
