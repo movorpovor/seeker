@@ -76,12 +76,16 @@ public class JobRepository
         """
         SELECT *
         FROM job j RIGHT JOIN applied_jobs hj ON j.id = hj.job_id
+        ORDER BY posted_date
+        LIMIT @limit OFFSET @offset
         """;
     
     private const string GET_HIDDEN_JOBS_DESCRIPTION =
         """
         SELECT *
         FROM job j RIGHT JOIN hidden_jobs hj ON j.id = hj.job_id
+        ORDER BY posted_date
+        LIMIT @limit OFFSET @offset
         """;
 
     private const string ADD_IMPORTANT_JOB =
@@ -102,6 +106,8 @@ public class JobRepository
         """
         SELECT *
         FROM job j RIGHT JOIN important_jobs hj ON j.id = hj.job_id
+        ORDER BY posted_date
+        LIMIT @limit OFFSET @offset
         """;
     
     public Task<int> InsertAsync(Job job)
