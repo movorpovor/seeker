@@ -1,5 +1,3 @@
-using System.Formats.Asn1;
-using System.Text.Json.Nodes;
 using DAL;
 using Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -66,5 +64,12 @@ public class JobController(JobRepository _jobRepository, IServiceScopeFactory _s
     public IEnumerable<Job> GetAppliedJobsList(int count, int offset)
     {
         return _jobRepository.GetAppliedJobs(count, offset);
+    }
+    
+    [HttpGet]
+    [Route("getImportantJobs")]
+    public IEnumerable<Job> GetImportantJobsList(int count, int offset)
+    {
+        return _jobRepository.GetImportantJobs(count, offset);
     }
 }

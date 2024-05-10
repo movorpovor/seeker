@@ -30,6 +30,11 @@ public class JobRepository
             
             SELECT job_id
             FROM applied_jobs
+            
+            UNION 
+            
+            SELECT job_id
+            FROM important_jobs
         )
         ORDER BY posted_date
         LIMIT @limit OFFSET @offset
@@ -47,6 +52,11 @@ public class JobRepository
             
             SELECT job_id
             FROM applied_jobs
+            
+            UNION 
+            
+            SELECT job_id
+            FROM important_jobs
         )
         """;
 
@@ -72,6 +82,26 @@ public class JobRepository
         """
         SELECT *
         FROM job j RIGHT JOIN hidden_jobs hj ON j.id = hj.job_id
+        """;
+
+    private const string ADD_IMPORTANT_JOB =
+        """
+        INSERT INTO important_jobs
+        VALUES (@jobId)
+        """;
+
+    private const string FILTER_IMPORTANT_EXISTING_JOBS =
+        """
+        INSERT INTO important_jobs
+        SELECT id
+        FROM job
+        WHERE content ilike @filter
+        """;
+    
+    private const string GET_IMPORTANT_JOBS_DESCRIPTION =
+        """
+        SELECT *
+        FROM job j RIGHT JOIN important_jobs hj ON j.id = hj.job_id
         """;
     
     public Task<int> InsertAsync(Job job)
@@ -130,5 +160,17 @@ public class JobRepository
     {
         using var context = new DbContext();
         return context.Connection.Query<Job>(GET_HIDDEN_JOBS_DESCRIPTION, new { limit, offset });
+    }
+
+    public void FilterImportantExistingJobs(string filter)
+    {
+        using var context = new DbContext();
+        context.Connection.Execute(FILTER_IMPORTANT_EXISTING_JOBS, new { filter = $"%{filter}%" });
+    }
+    
+    public IEnumerable<Job> GetImportantJobs(int limit, int offset)
+    {
+        using var context = new DbContext();
+        return context.Connection.Query<Job>(GET_IMPORTANT_JOBS_DESCRIPTION, new { limit, offset });
     }
 }

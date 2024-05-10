@@ -11,6 +11,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddTransient<JobRepository, JobRepository>();
 builder.Services.AddTransient<DbContext, DbContext>();
+builder.Services.AddTransient<FilterRepository, FilterRepository>();
 builder.Services.AddSingleton<ServiceStateService, ServiceStateService>();
 
 
