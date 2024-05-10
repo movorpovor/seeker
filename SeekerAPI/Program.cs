@@ -29,12 +29,8 @@ var app = builder.Build();
 builder.Services.AddTransient<JobRequestRepository, JobRequestRepository>();
 */
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(x => { x.SwaggerEndpoint("/swagger/v1/swagger.yaml", "Seeker Dashboard API"); });
-}
+app.UseSwagger();
+app.UseSwaggerUI(x => { x.SwaggerEndpoint("/swagger/v1/swagger.yaml", "Seeker Dashboard API"); });
 
 app.UseCors(x => x
     .AllowAnyMethod()
