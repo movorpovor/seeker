@@ -1,4 +1,5 @@
 using DAL;
+using Interfaces;
 using SeekerAPI.Models;
 
 namespace SeekerAPI.Services;
@@ -13,7 +14,7 @@ public class ServiceStateService
         _jobRepository = jobRepository;
         State = new ServiceState()
         {
-            JobsCount = _jobRepository.GetJobsCount()
+            JobsCount = _jobRepository.GetJobsCountByFilter(JobFilterType.None)
         };
     }
 }

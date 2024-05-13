@@ -1,4 +1,6 @@
+using System.Text.Json.Serialization;
 using DAL;
+using SeekerAPI;
 using SeekerAPI.Services;
 using SeekHandler;
 
@@ -6,7 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions( options =>
+{
+    options.JsonSerializerOptions.Converters.Add( new JsonStringEnumConverter() );
+});;
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddTransient<JobRepository, JobRepository>();
@@ -22,8 +27,11 @@ builder.Services.AddTransient<JobRequestRepository, JobRequestRepository>();
 
 builder.Services.AddCors();
 
-var app = builder.Build();
+builder.Services.AddSwaggerGen(c => {
+    c.UseInlineDefinitionsForEnums();
+});
 
+var app = builder.Build();
 
 /* builder.Services.AddTransient<JobRetriever, JobRetriever>();
 builder.Services.AddTransient<JobRequestRepository, JobRequestRepository>();

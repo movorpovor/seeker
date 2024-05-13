@@ -13,7 +13,7 @@ public class FilterController(FilterRepository _filterRepository, JobRepository 
     public void AddFilter(string text, JobFilterType type)
     {
         _filterRepository.AddFilter(text, type);
-        _jobRepository.FilterImportantExistingJobs(text);
+        _jobRepository.FilterExistingJobs(text, type);
     }
 
     [HttpGet]

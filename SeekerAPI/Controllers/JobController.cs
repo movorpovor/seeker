@@ -14,9 +14,9 @@ public class JobController(
     ServiceStateService _serviceStateService): Controller
 {
     [HttpGet]
-    public IEnumerable<Job> GetJobsList(int count, int offset)
+    public IEnumerable<Job> GetJobsList(int count, int offset, JobFilterType filter)
     {
-        return _jobRepository.GetJobsDescriptionList(count, offset);
+        return _jobRepository.GetJobsDescriptionList(count, offset, filter);
     }
     
     [HttpPost]
@@ -48,7 +48,7 @@ public class JobController(
     [ProducesResponseType(204)]
     public Job? HideJob(int jobId, int pageLength, int page)
     {
-        _jobRepository.HideJob(jobId);
+        _jobRepository.SetFilterToJob(jobId, JobFilterType.Hidden);
         
         return _jobRepository.GetJobsDescriptionList(1, (page * pageLength) - 1).FirstOrDefault();
     }
@@ -59,29 +59,8 @@ public class JobController(
     [ProducesResponseType(204)]
     public Job? ApplyForAJob(int jobId, int pageLength, int page)
     {
-        _jobRepository.MarkJobAsApplied(jobId, DateTime.UtcNow);
+        _jobRepository.SetFilterToJob(jobId, JobFilterType.Applied);
         
         return _jobRepository.GetJobsDescriptionList(1, (page * pageLength) - 1).FirstOrDefault();
-    }
-    
-    [HttpGet]
-    [Route("getHiddenJobs")]
-    public IEnumerable<Job> GetHiddenJobsList(int count, int offset)
-    {
-        return _jobRepository.GetHiddenJobs(count, offset);
-    }
-    
-    [HttpGet]
-    [Route("getAppliedJobs")]
-    public IEnumerable<Job> GetAppliedJobsList(int count, int offset)
-    {
-        return _jobRepository.GetAppliedJobs(count, offset);
-    }
-    
-    [HttpGet]
-    [Route("getImportantJobs")]
-    public IEnumerable<Job> GetImportantJobsList(int count, int offset)
-    {
-        return _jobRepository.GetImportantJobs(count, offset);
     }
 }

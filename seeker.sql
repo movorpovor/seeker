@@ -2,9 +2,9 @@ CREATE TABLE job (
     id integer NOT NULL PRIMARY KEY,
     preview jsonb NOT NULL,
     posted_date timestamp without time zone DEFAULT '1994-11-26 00:00:00'::timestamp without time zone NOT NULL,
-    content text NOT NULL
+    content text NOT NULL,
+    filter integer DEFAULT 0 NOT NULL
 );
-
 
 CREATE TABLE request (
     id SERIAL PRIMARY KEY,
@@ -17,22 +17,9 @@ CREATE TABLE job_to_request (
     request_id integer REFERENCES request
 );
 
-CREATE TABLE applied_jobs (
-    job_id integer,
-    applied_date timestamp without time zone
-);
 
 CREATE TABLE filter (
     id SERIAL PRIMARY KEY,
     filter_text character varying(250) NOT NULL,
     filter_type integer NOT NULL
-);
-
-
-CREATE TABLE hidden_jobs (
-    job_id integer NOT NULL REFERENCES job
-);
-
-CREATE TABLE important_jobs (
-    job_id integer NOT NULL REFERENCES job
 );

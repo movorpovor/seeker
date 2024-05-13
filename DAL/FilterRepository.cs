@@ -17,6 +17,12 @@ public class FilterRepository
         FROM filter
         """;
 
+    private const string MARK_JOB_AS_IMPORTANT =
+        """
+        INSERT INTO important_jobs
+        VALUES (@jobIds)
+        """;
+
     public void AddFilter(string text, JobFilterType type)
     {
         using var context = new DbContext();
@@ -27,5 +33,16 @@ public class FilterRepository
     {
         using var context = new DbContext();
         return context.Connection.Query<JobFilter>(GET_ALL_FILTERS);
+    }
+
+    public void AddPointerToFilter(Job job, string filterText)
+    {
+        job.Content = job.Content.Replace(filterText, $"<a class=\"filtered-text\">{filterText}</a>");
+    }
+
+    public void MarkJobsAsImportant(IEnumerable<int> jobIds)
+    {
+        using var context = new DbContext();
+        context.Connection.Execute(MARK_JOB_AS_IMPORTANT, new { jobIds });
     }
 }

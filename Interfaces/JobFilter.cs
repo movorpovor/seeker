@@ -1,9 +1,12 @@
 namespace Interfaces;
 
 public enum JobFilterType 
-{
+{   
+    None,
     Important,
-    FilterOut
+    AutoIgnore,
+    Hidden,
+    Applied
 }
 
 public class JobFilter
