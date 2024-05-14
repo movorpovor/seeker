@@ -7,8 +7,8 @@ public class JobRepository
 {
     private const string INSERT_JOB =
         """
-        INSERT INTO job (id, preview, posted_date, content)
-        VALUES (@Id, @Preview::json, @PostedDate, @Content)
+        INSERT INTO job (id, preview, posted_date, content, filter)
+        VALUES (@Id, @Preview::json, @PostedDate, @Content, @Filter)
         """;
 
     private const string DUPLICATE_IDS =

@@ -66,9 +66,6 @@ public class JobRetriever(
 
         Console.WriteLine($"All jobs handled {jobList.Count}");
         var insertedResult = InsertJobsIntoDb(jobList.Values.ToArray(), filters);
-
-        if (insertedResult.FilteredJobs.TryGetValue(JobFilterType.Important, out var filteredJobs))
-            _filterRepository.MarkJobsAsImportant(filteredJobs);
         
         return insertedResult.InsertedJobs;
     }
@@ -96,7 +93,8 @@ public class JobRetriever(
                 
                 if (!filteredJobs.ContainsKey(filter.Type))
                     filteredJobs.Add(filter.Type, []);
-                
+
+                job.Filter = filter.Type;
                 filteredJobs[filter.Type].Add(job.Id);
             }
         }
