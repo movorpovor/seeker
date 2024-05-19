@@ -1,5 +1,6 @@
 using Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using SeekerAPI.Models;
 using SeekerAPI.Services;
 using SeekHandler;
 
@@ -13,9 +14,14 @@ public class JobController(
     IServiceStateService _serviceStateService): Controller
 {
     [HttpGet]
-    public IEnumerable<Job> GetJobsList(int count, int offset, JobFilterType filter)
+    public JobRequestResponse JobsList(int count, int offset, JobFilterType filter)
     {
-        return _jobRepository.GetJobsDescriptionList(count, offset, filter);
+
+        return new JobRequestResponse
+        {
+            Jobs = _jobRepository.GetJobsDescriptionList(count, offset, filter),
+            FullCount = _jobRepository.GetJobsCountByFilter(filter)
+        };
     }
     
     [HttpPost]
@@ -40,23 +46,27 @@ public class JobController(
     
     [HttpPost]
     [Route("hide")]
-    [ProducesResponseType(typeof(Job), 200)]
-    [ProducesResponseType(204)]
-    public Job? HideJob(int jobId, int pageLength, int page)
+    public JobMoveResponse HideJob(int jobId, int pageLength, int page, JobFilterType filter)
     {
         _jobRepository.SetFilterToJob(jobId, JobFilterType.Hidden);
-        
-        return _jobRepository.GetJobsDescriptionList(1, (page * pageLength) - 1).FirstOrDefault();
+
+        return new JobMoveResponse
+        {
+            Job = _jobRepository.GetJobsDescriptionList(1, (page * pageLength) - 1).FirstOrDefault(),
+            FullCount = _jobRepository.GetJobsCountByFilter(filter)
+        };
     }
 
     [HttpPost]
     [Route("apply")]
-    [ProducesResponseType(typeof(Job), 200)]
-    [ProducesResponseType(204)]
-    public Job? ApplyForAJob(int jobId, int pageLength, int page)
+    public JobMoveResponse ApplyForAJob(int jobId, int pageLength, int page, JobFilterType filter)
     {
         _jobRepository.SetFilterToJob(jobId, JobFilterType.Applied);
         
-        return _jobRepository.GetJobsDescriptionList(1, (page * pageLength) - 1).FirstOrDefault();
+        return new JobMoveResponse
+        {
+            Job = _jobRepository.GetJobsDescriptionList(1, (page * pageLength) - 1).FirstOrDefault(),
+            FullCount = _jobRepository.GetJobsCountByFilter(filter)
+        };
     }
 }
