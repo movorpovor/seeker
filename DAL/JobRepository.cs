@@ -3,7 +3,7 @@ using Interfaces;
 
 namespace DAL;
 
-public class JobRepository
+public class JobRepository : IJobRepository
 {
     private const string INSERT_JOB =
         """

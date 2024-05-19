@@ -1,16 +1,16 @@
+using Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using SeekerAPI.Models;
 using SeekerAPI.Services;
 
 namespace SeekerAPI.controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class ServiceStateController(ServiceStateService _state) : Controller
+public class ServiceStateController(IServiceStateService _state) : Controller
 {
     [HttpGet]
-    public ServiceState GetServiceState()
+    public SyncState GetServiceSyncState()
     {
-        return _state.State;
+        return _state.GetSyncState();
     }
 }

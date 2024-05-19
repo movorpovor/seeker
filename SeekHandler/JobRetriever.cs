@@ -6,16 +6,11 @@ using Interfaces;
 
 namespace SeekHandler;
 
-public class InsertJobResult(IEnumerable<int> insertedJobs, Dictionary<JobFilterType, List<int>> filteredJobs)
-{
-    public IEnumerable<int> InsertedJobs { get; set; } = insertedJobs;
-    public Dictionary<JobFilterType, List<int>> FilteredJobs { get; set; } = filteredJobs;
-}
-
 public class JobRetriever(
-    JobRepository _jobRepository,
+    IJobRepository _jobRepository,
     JobRequestRepository _jobRequestRepository,
-    FilterRepository _filterRepository
+    FilterRepository _filterRepository,
+    IServiceStateService _serviceState
 )
 {
     private const string DataStartFlag = "window.SEEK_REDUX_DATA = ";
@@ -23,86 +18,95 @@ public class JobRetriever(
 
     public async Task<int> UpdateAllRequests()
     {
-        var requestList = _jobRequestRepository.GetAllJobsRequestsInformation();
-        var filters = _filterRepository.GetAllFilters();
-        Console.WriteLine($"found requests - {requestList.Count()}");
-        foreach (var request in requestList)
+        var requestList = _jobRequestRepository.GetAllJobsRequestsInformation().ToArray();
+        var filters = _filterRepository.GetAllFilters().ToArray();
+        Console.WriteLine($"found requests - {requestList.Length}");
+        
+        for (var i = 0; i < requestList.Length; i++)
         {
-            Console.WriteLine($"starting handle request - {request}");
-            var jobsIds = await RetrieveJobList(request.Text, filters);
-            request.LastUpdateDate = DateTime.UtcNow;
-            
-            Console.WriteLine($"jobs fetch for request - {request}");
-            Console.WriteLine($"setting relations for request - {request}");
-            _jobRequestRepository.SetJobToRequestRelation(request.Id, jobsIds);
-            Console.WriteLine($"updating request date for request - {request}");
-            _jobRequestRepository.UpdateRequestDate(request);
-        }
+            Console.WriteLine($"[{requestList[i].Text}] starting handle request");
 
+            _serviceState.SetCurrentStateOfRequestSync(requestList[i].Text, i * 100 / requestList.Length);
+            await HandleJobRequest(requestList[i], filters);
+        }
+        
+        _serviceState.SetCurrentSyncState(false);
+        
         return 2;
     }
 
-    private async Task<IEnumerable<int>> RetrieveJobList(string request, IEnumerable<JobFilter> filters)
+    private async Task<List<int>> HandleJobRequest(JobRequest request, JobFilter[] filters)
     {
         var page = 1;
-        Console.WriteLine($"starting fetching jobs for {request} - {page}");
-        var jobList = new Dictionary<int, Job>();
-        var jobNodes = await GetData(request);
+        Console.WriteLine($"[{request.Text}] starting handling jobs. page = {page}");
+        var jobNodes = await GetData(request.Text);
+        var jobsList = new List<int>();
         
         while (jobNodes != null)
         {
-            Console.WriteLine($"received jobs");
-            foreach (var node in jobNodes.AsArray())
-            {
-                var job = new Job(node);
-                jobList.TryAdd(job.Id, job);
-            }
+            _serviceState.SetCurrentPageState(0, page);
+            Console.WriteLine($"[{request.Text}] received jobs");
+            var jobs =
+                jobNodes
+                    .AsArray()
+                    .Select(x => new Job(x))
+                    .GroupBy(x => x.Id)
+                    .Select(x => x.First())
+                    .ToArray();
+            
+            Console.WriteLine($"[{request.Text}] jobs found - {jobs.Length}");
 
+            var allJobsIds = jobs.Select(x => x.Id).ToArray();
+            var duplicates = _jobRepository.GetDuplicates(jobs.Select(x => x.Id).ToArray()).ToArray();
+
+            Console.WriteLine($"[{request.Text}] duplicates jobs - {duplicates.Length}");
+            
+            jobs = jobs.Where(x => !duplicates.Contains(x.Id)).ToArray();
+            
+            FillJobsContentAndFilterFromSeek(jobs, filters);
+
+            Console.WriteLine($"[{request.Text}] start insert job list page {page} into DB");
+        
+            _serviceState.AddJobs(
+                jobs.Length, 
+                jobs.Count(x=>x.Filter == JobFilterType.Important),
+                jobs.Count(x=>x.Filter == JobFilterType.AutoIgnore));
+            
+            _jobRepository.Insert(jobs);
+            _jobRequestRepository.SetJobToRequestRelation(request.Id, allJobsIds);
+            jobsList.AddRange(jobs.Select(x=>x.Id));
+
+            Console.WriteLine($"[{request.Text}] jobs inserted - {jobs.Length}");
+            
             Thread.Sleep(1 * 1000);
-
-            Console.WriteLine($"starting fetching jobs for {request} - {page + 1}");
-            jobNodes = await GetData(request, ++page);
+            
+            Console.WriteLine($"[{request.Text}] starting handling jobs. page = {page + 1}");
+            jobNodes = await GetData(request.Text, ++page);
         }
 
-        Console.WriteLine($"All jobs handled {jobList.Count}");
-        var insertedResult = InsertJobsIntoDb(jobList.Values.ToArray(), filters);
-        
-        return insertedResult.InsertedJobs;
+        return jobsList;
     }
 
-    private InsertJobResult InsertJobsIntoDb(Job[] values, IEnumerable<JobFilter> filters)
+    private void FillJobsContentAndFilterFromSeek(Job[] jobs, JobFilter[] filters)
     {
-        Console.WriteLine($"start insert job list into DB");
-        var duplicates = _jobRepository.GetDuplicates(values.Select(x => x.Id).ToArray());
-        Console.WriteLine($"duplicates found - {duplicates.Count()}");
-        var newJobs = values.Where(x => !duplicates.Contains(x.Id)).ToArray();
-        var filteredJobs = new Dictionary<JobFilterType, List<int>>();
-
-        foreach (var job in newJobs)
+        for (var i = 0; i < jobs.Length; i++)
         {
-            job.Content = GetDataForJob(job.Id).Result;
+            jobs[i].Content = GetDataForJob(jobs[i].Id).Result;
             Thread.Sleep(1 * 1000);
-            Console.WriteLine($"job requested - {job.Id}");
+            Console.WriteLine($"job requested - {jobs[i].Id}");
 
             foreach (var filter in filters)
             {
-                if (!job.Content.Contains(filter.Text)) 
+                if (!jobs[i].Content.Contains(filter.Text)) 
                     continue;
                 
-                _filterRepository.AddPointerToFilter(job, filter.Text);
-                
-                if (!filteredJobs.ContainsKey(filter.Type))
-                    filteredJobs.Add(filter.Type, []);
+                _filterRepository.AddPointerToFilter(jobs[i], filter.Text);
 
-                job.Filter = filter.Type;
-                filteredJobs[filter.Type].Add(job.Id);
+                jobs[i].Filter = filter.Type;
             }
+            
+            _serviceState.SetCurrentPageState(i * 100 / jobs.Length);
         }
-        
-        _jobRepository.Insert(newJobs);
-
-        Console.WriteLine($"jobs inserted - {newJobs.Length}");
-        return new InsertJobResult(newJobs.Select(x => x.Id), filteredJobs);
     }
 
     private async Task<JsonNode> GetData(string request, int page = 1)
@@ -128,7 +132,7 @@ public class JobRetriever(
         }
     }
     
-    public async Task<string> GetDataForJob(int jobId)
+    private async Task<string> GetDataForJob(int jobId)
     {
         try
         {

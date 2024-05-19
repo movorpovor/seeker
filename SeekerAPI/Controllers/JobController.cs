@@ -1,4 +1,3 @@
-using DAL;
 using Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using SeekerAPI.Services;
@@ -9,9 +8,9 @@ namespace SeekerAPI.controllers;
 [ApiController]
 [Route("[controller]")]
 public class JobController(
-    JobRepository _jobRepository, 
+    IJobRepository _jobRepository, 
     IServiceScopeFactory _serviceScopeFactory,
-    ServiceStateService _serviceStateService): Controller
+    IServiceStateService _serviceStateService): Controller
 {
     [HttpGet]
     public IEnumerable<Job> GetJobsList(int count, int offset, JobFilterType filter)
@@ -23,21 +22,18 @@ public class JobController(
     [Route("retrieveJobs")]
     public async void RetrieveJobsList()
     {
-        if (_serviceStateService.State.RetrieveInProgress)
+        if (!_serviceStateService.DoesSyncCanBePerformed())
             return;
-        
-        _serviceStateService.State.RetrieveInProgress = true;
-        
+
+        _serviceStateService.SetCurrentSyncState(true);
+
         var scope = _serviceScopeFactory.CreateScope();
         var newRetriever = scope.ServiceProvider.GetService<JobRetriever>();
         Task.Run(() =>
         {
             using (scope)
             {
-                newRetriever.UpdateAllRequests().ContinueWith(task =>
-                {
-                    _serviceStateService.State.RetrieveInProgress = false; 
-                });
+                newRetriever.UpdateAllRequests();
             }
         });
     }

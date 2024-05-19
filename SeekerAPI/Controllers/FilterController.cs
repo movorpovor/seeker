@@ -6,7 +6,7 @@ namespace SeekerAPI.controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class FilterController(FilterRepository _filterRepository, JobRepository _jobRepository): Controller
+public class FilterController(FilterRepository _filterRepository, IJobRepository _jobRepository): Controller
 {
     [HttpPost]
     [Route("addFilter")]

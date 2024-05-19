@@ -32,7 +32,7 @@ public class JobRequestRepository
         return context.Connection.Query<JobRequest>(GET_ALL_REQUESTS_INFORMATION);
     }
 
-    #region REQUESTS
+    #region QERIES
 
     private const string ADD_REQUEST =
         """
@@ -51,6 +51,7 @@ public class JobRequestRepository
         """
         INSERT INTO job_to_request (job_id, request_id)
         VALUES(@jobId, @requestId)
+        ON CONFLICT DO NOTHING
         """;
 
     private const string UPDATE_REQUEST_DATE =

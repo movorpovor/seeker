@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using DAL;
+using Interfaces;
 using SeekerAPI;
 using SeekerAPI.Services;
 using SeekHandler;
@@ -14,10 +15,10 @@ builder.Services.AddControllers().AddJsonOptions( options =>
 });;
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddTransient<JobRepository, JobRepository>();
+builder.Services.AddTransient<IJobRepository, JobRepository>();
 builder.Services.AddTransient<DbContext, DbContext>();
 builder.Services.AddTransient<FilterRepository, FilterRepository>();
-builder.Services.AddSingleton<ServiceStateService, ServiceStateService>();
+builder.Services.AddSingleton<IServiceStateService, ServiceStateService>();
 
 
 builder.Services.AddTransient<JobRetriever, JobRetriever>();
