@@ -52,7 +52,7 @@ public class JobController(
 
         return new JobMoveResponse
         {
-            Job = _jobRepository.GetJobsDescriptionList(1, (page * pageLength) - 1).FirstOrDefault(),
+            Job = _jobRepository.GetJobsDescriptionList(1, (page * pageLength) - 1, filter).FirstOrDefault(),
             FullCount = _jobRepository.GetJobsCountByFilter(filter)
         };
     }
