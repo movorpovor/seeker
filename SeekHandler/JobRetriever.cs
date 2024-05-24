@@ -97,14 +97,26 @@ public class JobRetriever(
 
             foreach (var filter in filters)
             {
-                if (!jobs[i].Content.Contains(filter.Text)) 
-                    continue;
+                switch (filter.Subtype)
+                {
+                    case JobFilterSubtype.Content:
+                        if (jobs[i].Content.IndexOf(filter.Text, StringComparison.OrdinalIgnoreCase) < 0)
+                            continue;
+                        
+                        break;
+                    case JobFilterSubtype.Title:
+                        if (jobs[i].Title.IndexOf(filter.Text, StringComparison.OrdinalIgnoreCase) < 0)
+                            continue;
+                        
+                        break;
+                    default:
+                        continue;
+                }
                 
-                _filterRepository.AddPointerToFilter(jobs[i], filter.Text);
-
+                _filterRepository.AddPointerToFilter(jobs[i], filter);
                 jobs[i].Filter = filter.Type;
             }
-            
+
             _serviceState.SetCurrentPageState(i * 100 / jobs.Length);
         }
     }

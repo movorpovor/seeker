@@ -7,8 +7,8 @@ public class JobRepository : IJobRepository
 {
     private const string INSERT_JOB =
         """
-        INSERT INTO job (id, preview, posted_date, content, filter)
-        VALUES (@Id, @Preview::json, @PostedDate, @Content, @Filter)
+        INSERT INTO job (id, preview, posted_date, content, filter, title)
+        VALUES (@Id, @Preview::json, @PostedDate, @Content, @Filter, @Title)
         """;
 
     private const string DUPLICATE_IDS =
@@ -45,8 +45,16 @@ public class JobRepository : IJobRepository
         """
         UPDATE job
         SET filter = @filter, 
-            content = regexp_replace(content, @filterExpression, @filterToReplace, 'i')
-        WHERE content ilike @filterExpression and filter <> @hiddenFilter;
+            content = regexp_replace(content, @filterText, @filterToReplace, 'i')
+        WHERE content ilike @filterExpression and filter = 0;
+        """;
+    
+    private const string SET_FILTER_BY_TITLE =
+        """
+        UPDATE job
+        SET filter = @filter, 
+            preview = jsonb_set(preview, '{title}', concat('"', regexp_replace(preview->>'title', @filterText, @filterToReplace, 'i'), '"')::jsonb)
+        WHERE title ilike @filterExpression and filter = 0;
         """;
     
     public int Insert(Job[] jobs)
@@ -92,17 +100,31 @@ public class JobRepository : IJobRepository
         );
     }
 
-    public void FilterExistingJobs(string filterExpression, JobFilterType filter)
+    public void FilterExistingJobs(string filterExpression, JobFilterType filter, JobFilterSubtype subtype)
     {
+        var command = string.Empty;
+
+        switch (subtype)
+        {
+            case JobFilterSubtype.Content:
+                command = SET_FILTER_BY_CONTENT;
+                break;
+            case JobFilterSubtype.Title:
+                command = SET_FILTER_BY_TITLE;
+                break;
+            default:
+                return;
+        }
+        
         using var context = new DbContext();
         context.Connection.Execute(
-            SET_FILTER_BY_CONTENT, 
+            command, 
             new
             {
                 filter,
                 filterExpression = $"%{filterExpression}%",
-                hiddenFilter = JobFilterType.Hidden,
-                filterToReplace = $"<a class=\"filtered-text\">{filterExpression}</a>"
+                filterText = filterExpression,
+                filterToReplace = $"<a class=\\\"filtered-text\\\">{filterExpression}</a>"
             });
     }
 }

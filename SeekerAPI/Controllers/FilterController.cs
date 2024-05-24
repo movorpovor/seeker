@@ -10,10 +10,10 @@ public class FilterController(FilterRepository _filterRepository, IJobRepository
 {
     [HttpPost]
     [Route("addFilter")]
-    public void AddFilter(string text, JobFilterType type)
+    public void AddFilter(string text, JobFilterType type, JobFilterSubtype subtype)
     {
-        _filterRepository.AddFilter(text, type);
-        _jobRepository.FilterExistingJobs(text, type);
+        _filterRepository.AddFilter(text, type, subtype);
+        _jobRepository.FilterExistingJobs(text, type, subtype);
     }
 
     [HttpGet]

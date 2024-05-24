@@ -14,6 +14,8 @@ public class Job
     
     public string Content { get; set; }
     
+    public string Title { get; set; }
+    
     public DateTime PostedDate { get; set; }
     
     public JobFilterType Filter { get; set; }
@@ -27,6 +29,7 @@ public class Job
     {
         Id = jobNode["id"].GetValue<int>();
         PostedDate = jobNode["listingDate"].GetValue<DateTime>();
+        Title = jobNode["title"].GetValue<string>();
         Preview = jobNode.ToJsonString();
         Filter = JobFilterType.None;
     }

@@ -9,6 +9,12 @@ public enum JobFilterType
     Applied
 }
 
+public enum JobFilterSubtype
+{
+    Content,
+    Title
+}
+
 public class JobFilter
 {
     public int Id { get; set; }
@@ -16,4 +22,6 @@ public class JobFilter
     public string Text { get; set; }
     
     public JobFilterType Type { get; set; }
+    
+    public JobFilterSubtype Subtype { get; set; }
 }
