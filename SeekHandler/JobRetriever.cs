@@ -18,6 +18,7 @@ public class JobRetriever(
 
     public async Task<int> UpdateAllRequests()
     {
+        _jobRepository.CleanHiddenJobs();
         var requestList = _jobRequestRepository.GetAllJobsRequestsInformation().ToArray();
         var filters = _filterRepository.GetAllFilters().ToArray();
         Console.WriteLine($"found requests - {requestList.Length}");

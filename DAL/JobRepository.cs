@@ -56,6 +56,13 @@ public class JobRepository : IJobRepository
             preview = jsonb_set(preview, '{title}', concat('"', regexp_replace(preview->>'title', @filterText, @filterToReplace, 'i'), '"')::jsonb)
         WHERE title ilike @filterExpression and filter = 0;
         """;
+
+    private const string CLEAN_HIDDEN_JOBS =
+        """
+        DELETE FROM job
+        WHERE filter = @hiddenFilter AND
+              posted_date < @deleteFrom;
+        """;
     
     public int Insert(Job[] jobs)
     {
@@ -98,6 +105,14 @@ public class JobRepository : IJobRepository
             SET_FILTER_TO_JOB, 
             new { filter, jobId }
         );
+    }
+
+    public void CleanHiddenJobs()
+    {
+        using var context = new DbContext();
+        context.Connection.Execute(
+            CLEAN_HIDDEN_JOBS,
+            new { hiddenFilter = JobFilterType.Hidden, deleteFrom = DateTime.UtcNow - TimeSpan.FromDays(3) });
     }
 
     public void FilterExistingJobs(string filterExpression, JobFilterType filter, JobFilterSubtype subtype)

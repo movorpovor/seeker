@@ -13,4 +13,6 @@ public interface IJobRepository
     int SetFilterToJob(int jobId, JobFilterType filter);
 
     void FilterExistingJobs(string filterExpression, JobFilterType filter, JobFilterSubtype subtype);
+
+    void CleanHiddenJobs();
 }

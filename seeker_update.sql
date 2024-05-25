@@ -19,10 +19,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION set_system_db_version(version INT) RETURNS void AS $$
+CREATE OR REPLACE FUNCTION set_system_db_version(newVersion INT) RETURNS void AS $$
 BEGIN
     UPDATE system_state
-    SET version = version;
+    SET version = newVersion;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -52,7 +52,38 @@ BEGIN
         ALTER COLUMN title
         SET NOT NULL;
 
+        PERFORM set_system_db_version(1);
+
     END IF;
 END;
 $$ LANGUAGE plpgsql;
 
+DO $$
+BEGIN
+    IF (get_system_db_version() < 2) THEN
+    
+    ALTER TABLE job_to_request
+    DROP CONSTRAINT job_to_request_job_id_fkey;
+
+    PERFORM set_system_db_version(2);
+
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+
+DO $$
+BEGIN
+    IF (get_system_db_version() < 3) THEN
+    
+    ALTER TABLE job_to_request
+    ADD CONSTRAINT job_to_request_job_id_fkey
+        FOREIGN KEY (job_id)
+        REFERENCES job(id)
+        ON DELETE CASCADE;
+
+    PERFORM set_system_db_version(3);
+
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
